@@ -1,15 +1,5 @@
 services:
 
-  tempo:
-    image: grafana/tempo:latest
-    volumes:
-      - ./shared/tempo:/etc
-      - ./tempo-data:/var/tempo
-    ports:
-      - "4320:4317"  # otlp grpc
-      - "4321:4318"  # otlp http
-    entrypoint: sh -c "wget --no-check-certificate -O /etc/tempo.yml https://raw.githubusercontent.com/aussiearef/grafana-udemy/main/tempo/tempo.yml && exec /tempo -config.file=/etc/tempo.yml"
-
   prometheus:
     image: prom/prometheus:latest
     volumes:
@@ -17,6 +7,8 @@ services:
     ports:
       - "9090:9090"
     entrypoint: sh -c "wget --no-check-certificate -O /etc/prometheus/prometheus-local.yml https://raw.githubusercontent.com/aussiearef/grafana-udemy/main/prometheus/prometheus.yml && exec /bin/prometheus --config.file=/etc/prometheus/prometheus-local.yml --web.enable-remote-write-receiver"
+    networks:
+      - grafana-network. #Asegurar que estén en la misma red todos los servicios
 
   loki:
     image: grafana/loki:latest
@@ -27,6 +19,8 @@ services:
       - ./shared/loki/rules:/loki/rules/
     ports:
       - "3100:3100"
+    networks:
+      - grafana-network. #Asegurar que estén en la misma red todos los servicios
 
   promtail:
     image: grafana/promtail:latest
@@ -34,7 +28,9 @@ services:
       - "-config.file=/etc/promtail/config.yml"   
       - ./shared/logs:/var/log   
     depends_on:
-      - loki   
+      - loki
+    networks:
+      - grafana-network. #Asegurar que estén en la misma red todos los servicios   
 
   alloy:
     image: grafana/alloy:latest  
@@ -46,6 +42,8 @@ services:
       - "4317:4317"  
       - "4318:4318"  
     entrypoint: sh -c "apt-get update -y && apt-get -y install wget && wget --no-check-certificate -O /etc/alloy/config.alloy https://raw.githubusercontent.com/aussiearef/grafana-udemy/main/alloy/config.alloy && exec /bin/alloy run /etc/alloy/config.alloy"
+    networks:
+      - grafana-network. #Asegurar que estén en la misma red todos los servicios
 
   grafana:
     image: grafana/grafana:latest
@@ -54,32 +52,16 @@ services:
     environment:
       - GF_AUTH_ANONYMOUS_ENABLED=false
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
-      - GF_AUTH_DISABLE_LOGIN_FORM=false
+      - GF_AUTH_DISABLE_LOGIN_FORM=false #No credenciales
     ports:
       - "3000:3000"
     entrypoint: sh -c "wget --no-check-certificate -O /etc/grafana/provisioning/datasources/datasources.yml https://raw.githubusercontent.com/aussiearef/grafana-udemy/main/grafana/datasources.yml && exec sh /run.sh"
 
-  shoehub:
-    image: aussiearef/shoehub
-    ports:
-      - "8001:8080"
-
-  orderservice:
-    image: aussiearef/orderservice
-  
-  paymentservice:
-    image: aussiearef/paymentservice
-  
-  stimulator:
-    image: aussiearef/stimulator
-    depends_on:
-      - orderservice
-      - paymentservice 
-
-  
-
-
 
 volumes:
   prometheus-data:
-  tempo-data:
+  
+
+networks:
+  grafana-network:
+    external: true
