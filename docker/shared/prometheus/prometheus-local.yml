@@ -2,10 +2,10 @@ global:
   scrape_interval: 5s
 
 scrape_configs:
-  - job_name: "outcurr"
+  - job_name: 'shoehub'
     static_configs:
       - targets:
-          - outcurr:8083
+          - shoehub:8080
 
 rule_files:
   - "rule/alerts.yml"
@@ -13,10 +13,12 @@ rule_files:
 
 alerting:
   alertmanagers:
-    - scheme: http
+  - scheme: http
     basic_auth:
       username: "admin"
       password: "password"
-    - static_configs:
-        - targets:
-            - localhost:9093
+  - static_configs:
+    - targets:
+       - localhost:9093
+
+
